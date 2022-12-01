@@ -22,7 +22,7 @@ The CosmosDB builder abstracts the idea of account and database into one. If you
 |-|-|-|
 | Database | name | Sets the name of the database. |
 | Database | link_to_account | Instructs Farmer to link this database to an existing Cosmos DB account rather than creating a new one. |
-| Database | throughput | Sets the throughput with either "provisioned throughput" or "serverless". |
+| Database | throughput | Sets the throughput with either "provisioned throughput", "autoscale throughput" or "serverless". |
 | Database | add_containers | Adds a list of containers to the database. |
 | Account | account_name | Sets the name of the CosmosDB account. |
 | Account | api (not yet implemented) | Sets the API and data model to use -- currently defaults to "Core (SQL)". |
@@ -31,6 +31,7 @@ The CosmosDB builder abstracts the idea of account and database into one. If you
 | Account | consistency_policy | Sets the consistency policy of the database. |
 | Account | failover_policy | Sets the failover policy of the database. |
 | Account | free_tier | Registers this server with the free pricing tier, if supported and allowed by Azure. |
+| Account | backup_policy | Defines the backup policy for this CosmosDB account. Supports "Continuous" and "Periodic" |
 
 #### Cosmos Container Builder
 The container builder allows you to create and configure a specific container that is attached to a cosmos database.

@@ -18,6 +18,10 @@ let myCosmosDb = cosmosDb {
             exclude_path "/excluded/*"
         }
     ]
+    backup_policy (CosmosDb.BackupPolicy.Periodic(
+        BackupIntervalInMinutes = 60,
+        BackupRetentionIntervalInHours = 168,
+        BackupStorageRedundancy = CosmosDb.BackupStorageRedundancy.Geo))
 }
 
 let deployment =

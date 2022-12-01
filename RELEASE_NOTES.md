@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+## vNext
+* CosmosDB: Add support for Autoscale throughput
+* CosmosDB: Add support for defining continuous and periodic backup policies.
+
 ## 1.7.13
 * KeyVault: Added support for disabling public network access.
 * KeyVault: Added missing key permissions (GetRotationPolicy, SetRotationPolicy, Rotate)
