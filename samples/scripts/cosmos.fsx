@@ -7,7 +7,7 @@ open Farmer.CosmosDb
 let myCosmosDb = cosmosDb {
     name "isaacsappdb"
     account_name "isaacscosmosdb"
-    throughput 400<CosmosDb.RU>
+    throughput (CosmosDb.Throughput.Autoscale(1000<CosmosDb.RU>)) // Shared throughput
     failover_policy NoFailover
     consistency_policy (BoundedStaleness(500, 1000))
     add_containers [
@@ -17,12 +17,22 @@ let myCosmosDb = cosmosDb {
             add_index "/path" [ Number, Hash ]
             exclude_path "/excluded/*"
         }
+        cosmosContainer {
+            name "myOtherContainer"
+            throughput 400<CosmosDb.RU> // Dedicated container throughput
+            partition_key [ "/id" ] Hash
+            add_indexes [
+                ("/pathone/?", [ CosmosDb.String, CosmosDb.Range ])
+                ("/pathtwo/?", [ CosmosDb.String, CosmosDb.Range ])
+            ]
+            exclude_path "/excluded/*"
+        }
     ]
+    restrict_to_azure_services
     backup_policy (CosmosDb.BackupPolicy.Periodic(
         BackupIntervalInMinutes = 60,
         BackupRetentionIntervalInHours = 168,
         BackupStorageRedundancy = CosmosDb.BackupStorageRedundancy.Geo))
-    restrict_to_azure_services
 }
 
 let deployment =

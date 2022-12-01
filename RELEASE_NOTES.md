@@ -3,8 +3,10 @@ Release Notes
 
 ## vNext
 * CosmosDB: Add support for Autoscale throughput
+* CosmosDB: Add support for dedicated container throughput
 * CosmosDB: Add support for defining continuous and periodic backup policies.
 * CosmosDB: Add support for restricting network access to Azure services.
+* CosmosDB: Add `add_indexes` helper for passing in an array of indexes.
 
 ## 1.7.13
 * KeyVault: Added support for disabling public network access.

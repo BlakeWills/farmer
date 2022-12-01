@@ -22,7 +22,7 @@ The CosmosDB builder abstracts the idea of account and database into one. If you
 |-|-|-|
 | Database | name | Sets the name of the database. |
 | Database | link_to_account | Instructs Farmer to link this database to an existing Cosmos DB account rather than creating a new one. |
-| Database | throughput | Sets the throughput with either "provisioned throughput", "autoscale throughput" or "serverless". |
+| Database | throughput | Sets the throughput with either "provisioned throughput", "autoscale throughput", "serverless" or "None" (for dedicated container throughput). |
 | Database | add_containers | Adds a list of containers to the database. |
 | Account | account_name | Sets the name of the CosmosDB account. |
 | Account | api (not yet implemented) | Sets the API and data model to use -- currently defaults to "Core (SQL)". |
@@ -42,7 +42,9 @@ The container builder allows you to create and configure a specific container th
 | name | Sets the name of the container. |
 | partition_key | Sets the partition key of the container. |
 | add_index | Adds an index to the container. |
+| add_indexes | Adds multiple indexes to the container. |
 | exclude_path | Excludes a path from the container index. |
+| throughput | Provisions dedicated throughput for the container. Can be used in conjunction with `throughput None` against the Database to remove shared database throughput. |
 
 #### Example
 ```fsharp
