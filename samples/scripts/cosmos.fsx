@@ -14,7 +14,7 @@ let myCosmosDb = cosmosDb {
         cosmosContainer {
             name "myContainer"
             partition_key [ "/id" ] Hash
-            add_index "/path" [ Number, Hash ]
+            add_index "/path/?" [ Number, Hash ]
             exclude_path "/excluded/*"
         }
         cosmosContainer {
@@ -22,8 +22,8 @@ let myCosmosDb = cosmosDb {
             throughput 400<CosmosDb.RU> // Dedicated container throughput
             partition_key [ "/id" ] Hash
             add_indexes [
-                ("/pathone/?", [ CosmosDb.String, CosmosDb.Range ])
-                ("/pathtwo/?", [ CosmosDb.String, CosmosDb.Range ])
+                ("/pathone/?", [ String, Range ])
+                ("/pathtwo/?", [ String, Range ])
             ]
             exclude_path "/excluded/*"
         }
