@@ -74,6 +74,7 @@ type CosmosDbConfig =
         DbThroughput: Throughput
         Containers: CosmosDbContainerConfig list
         PublicNetworkAccess: FeatureFlag
+        RestrictToAzureServices: FeatureFlag
         FreeTier: bool
         Tags: Map<string, string>
         BackupPolicy: BackupPolicy
@@ -123,6 +124,7 @@ type CosmosDbConfig =
                             | Serverless -> Enabled
                             | _ -> Disabled
                         PublicNetworkAccess = this.PublicNetworkAccess
+                        RestrictToAzureServices = this.RestrictToAzureServices
                         FailoverPolicy = this.AccountFailoverPolicy
                         FreeTier = this.FreeTier
                         BackupPolicy = this.BackupPolicy
@@ -246,6 +248,7 @@ type CosmosDbBuilder() =
             DbThroughput = Provisioned 400<RU>
             Containers = []
             PublicNetworkAccess = Enabled
+            RestrictToAzureServices = Disabled
             FreeTier = false
             Tags = Map.empty
             BackupPolicy = BackupPolicy.NoBackup
@@ -340,6 +343,13 @@ type CosmosDbBuilder() =
     member _.BackupPolicy(state: CosmosDbConfig, backupPolicy:BackupPolicy) =
         { state with
             BackupPolicy = backupPolicy
+        }
+
+    /// Add an IP rule which only allows access from Azure services.
+    [<CustomOperation "restrict_to_azure_services">]
+    member _.RestrictToAzureServices(state: CosmosDbConfig) =
+        { state with
+            RestrictToAzureServices = Enabled
         }
 
     interface ITaggable<CosmosDbConfig> with

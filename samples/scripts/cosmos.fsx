@@ -22,6 +22,7 @@ let myCosmosDb = cosmosDb {
         BackupIntervalInMinutes = 60,
         BackupRetentionIntervalInHours = 168,
         BackupStorageRedundancy = CosmosDb.BackupStorageRedundancy.Geo))
+    restrict_to_azure_services
 }
 
 let deployment =
