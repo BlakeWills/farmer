@@ -212,23 +212,51 @@ let tests =
                     (jobj.SelectToken($"{accountSelector}.properties.backupPolicy.type", errorWhenNoMatch = false))
                     "backup policy should not be included by default"
             }
-            test "Continuous backup policy" {
+            test "Continuous7Days backup policy" {
                 let t =
                     arm {
                         add_resource (
                             cosmosDb {
                                 name "test"
-                                backup_policy CosmosDb.BackupPolicy.Continuous
+                                backup_policy CosmosDb.BackupPolicy.Continuous7Days
                             }
                         )
                     }
 
                 let jobj = getParsedTemplate t
 
-                let policy =
-                    jobj.SelectToken($"{accountSelector}.properties.backupPolicy.type").ToString()
+                Expect.equal
+                    (jobj.SelectToken($"{accountSelector}.properties.backupPolicy.type").ToString())
+                    "Continuous"
+                    "backup policy should be Continuous"
 
-                Expect.equal policy "Continuous" "backup policy should be Continuous"
+                Expect.equal 
+                    (jobj.SelectToken($"{accountSelector}.properties.backupPolicy.continuousModeProperties.tier").ToString())
+                    "Continuous7Days"
+                    "continuousModeProperties.tier should be Continuous7Days"
+            }
+            test "Continuous30Days backup policy" {
+                let t =
+                    arm {
+                        add_resource (
+                            cosmosDb {
+                                name "test"
+                                backup_policy CosmosDb.BackupPolicy.Continuous30Days
+                            }
+                        )
+                    }
+
+                let jobj = getParsedTemplate t
+
+                Expect.equal
+                    (jobj.SelectToken($"{accountSelector}.properties.backupPolicy.type").ToString())
+                    "Continuous"
+                    "backup policy should be Continuous"
+
+                Expect.equal 
+                    (jobj.SelectToken($"{accountSelector}.properties.backupPolicy.continuousModeProperties.tier").ToString())
+                    "Continuous30Days"
+                    "continuousModeProperties.tier should be Continuous30Days"
             }
             test "Periodic backup policy" {
                 let t =

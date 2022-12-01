@@ -248,7 +248,22 @@ type DatabaseAccount =
                                 null
                         backupPolicy =
                             match this.BackupPolicy with
-                            | BackupPolicy.Continuous -> box {| ``type`` = "Continuous" |}
+                            | BackupPolicy.Continuous7Days -> 
+                                box 
+                                    {| 
+                                        ``type`` = "Continuous"
+                                        continuousModeProperties = {|
+                                            tier = "Continuous7Days"
+                                        |}
+                                    |}
+                            | BackupPolicy.Continuous30Days -> 
+                                box 
+                                    {| 
+                                        ``type`` = "Continuous"
+                                        continuousModeProperties = {|
+                                            tier = "Continuous30Days"
+                                        |}
+                                    |}
                             | BackupPolicy.Periodic (interval, retention, redundancy) ->
                                 box
                                     {|

@@ -2671,7 +2671,8 @@ module CosmosDb =
     /// The backup policy of a CosmosDB account
     type BackupPolicy =
         | NoBackup
-        | Continuous
+        | Continuous7Days
+        | Continuous30Days    
         | Periodic of
             BackupIntervalInMinutes: int *
             BackupRetentionIntervalInHours: int *
