@@ -13,19 +13,20 @@ let myCosmosDb = cosmosDb {
     add_containers [
         cosmosContainer {
             name "myContainer"
-            partition_key [ "/id" ] Hash
-            add_index "/path/?" [ Number, Hash ]
-            exclude_path "/excluded/*"
-        }
-        cosmosContainer {
-            name "myOtherContainer"
             throughput 400<CosmosDb.RU> // Dedicated container throughput
             partition_key [ "/id" ] Hash
+            add_index "/path/?" [ Number, Hash ]
             add_indexes [
                 ("/pathone/?", [ String, Range ])
                 ("/pathtwo/?", [ String, Range ])
             ]
-            exclude_path "/excluded/*"
+            exclude_path "/*"
+        }
+        cosmosContainer {
+            name "myOtherContainer"
+            partition_key [ "/id" ] Hash
+            add_index "/path/?" [ Number, Hash ]
+            exclude_path "/*"
         }
     ]
     restrict_to_azure_services
