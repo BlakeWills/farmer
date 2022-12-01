@@ -2663,16 +2663,19 @@ module CosmosDb =
         | Autoscale of int<RU>
 
     /// The residency of database backups
-    type BackupStorageRedundancy = 
+    type BackupStorageRedundancy =
         | Geo
         | Local
         | Zone
 
     /// The backup policy of a CosmosDB account
-    type BackupPolicy = 
+    type BackupPolicy =
         | NoBackup
         | Continuous
-        | Periodic of BackupIntervalInMinutes:int * BackupRetentionIntervalInHours:int * BackupStorageRedundancy:BackupStorageRedundancy
+        | Periodic of
+            BackupIntervalInMinutes: int *
+            BackupRetentionIntervalInHours: int *
+            BackupStorageRedundancy: BackupStorageRedundancy
 
 module PostgreSQL =
     type Sku =

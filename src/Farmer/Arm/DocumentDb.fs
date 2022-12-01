@@ -83,10 +83,10 @@ module DatabaseAccounts =
                                                     |> List.map (fun p -> {| path = p |})
                                             |}
                                     |}
-                                options = 
+                                options =
                                     match this.Throughput with
-                                    | Some t -> 
-                                        box 
+                                    | Some t ->
+                                        box
                                             {|
                                                 throughput =
                                                     match t with
@@ -236,26 +236,20 @@ type DatabaseAccount =
                             | [], Disabled -> null
                             | locations, _ -> box locations
                         publicNetworkAccess = string this.PublicNetworkAccess
-                        ipRules = 
-                          match this.RestrictToAzureServices with
-                          | Enabled ->
-                                box
-                                    [
-                                        {|
-                                            ipAddressOrRange = "0.0.0.0"
-                                        |}
-                                    ]
-                          | Disabled -> null
+                        ipRules =
+                            match this.RestrictToAzureServices with
+                            | Enabled -> box [ {| ipAddressOrRange = "0.0.0.0" |} ]
+                            | Disabled -> null
                         enableFreeTier = this.FreeTier
                         capabilities =
                             if this.Serverless = Enabled then
                                 box [ {| name = "EnableServerless" |} ]
                             else
                                 null
-                        backupPolicy = 
+                        backupPolicy =
                             match this.BackupPolicy with
                             | BackupPolicy.Continuous -> box {| ``type`` = "Continuous" |}
-                            | BackupPolicy.Periodic(interval, retention, redundancy) -> 
+                            | BackupPolicy.Periodic (interval, retention, redundancy) ->
                                 box
                                     {|
                                         ``type`` = "Periodic"

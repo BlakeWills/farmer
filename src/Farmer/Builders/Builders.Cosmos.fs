@@ -184,8 +184,7 @@ type CosmosDbContainerBuilder() =
 
     member _.Run state =
         match state.ContainerThroughput with
-        | Some Serverless ->
-            raiseFarmer "Container throughput can must be one of 'Provisioned' or 'Autoscale'"
+        | Some Serverless -> raiseFarmer "Container throughput can must be one of 'Provisioned' or 'Autoscale'"
         | _ -> ()
 
         match state.PartitionKey with
@@ -245,15 +244,19 @@ type CosmosDbContainerBuilder() =
     /// Sets the throughput of the container.
     [<CustomOperation "throughput">]
     member _.Throughput(state: CosmosDbContainerConfig, throughput) =
-        { state with ContainerThroughput = Some throughput }
-
-    member _.Throughput(state: CosmosDbContainerConfig, throughput) =
         { state with
-            ContainerThroughput = Some (Provisioned throughput)
+            ContainerThroughput = Some throughput
         }
 
     member _.Throughput(state: CosmosDbContainerConfig, throughput) =
-        { state with ContainerThroughput = throughput }
+        { state with
+            ContainerThroughput = Some(Provisioned throughput)
+        }
+
+    member _.Throughput(state: CosmosDbContainerConfig, throughput) =
+        { state with
+            ContainerThroughput = throughput
+        }
 
 type CosmosDbBuilder() =
     member _.Yield _ =
@@ -282,12 +285,15 @@ type CosmosDbBuilder() =
             BackupPolicy = BackupPolicy.NoBackup
             Kind = DatabaseKind.Document
         }
-        
-    member _.Run state = 
-        let containersWithoutThroughput = state.Containers |> List.filter (fun c -> c.ContainerThroughput.IsNone)
+
+    member _.Run state =
+        let containersWithoutThroughput =
+            state.Containers |> List.filter (fun c -> c.ContainerThroughput.IsNone)
+
         match state.DbThroughput, containersWithoutThroughput with
-        | None, [_] -> 
-            raiseFarmer "One or more containers have no throughput specified. Either set database (shared) throughput, or set dedicated throughput against each container."
+        | None, [ _ ] ->
+            raiseFarmer
+                "One or more containers have no throughput specified. Either set database (shared) throughput, or set dedicated throughput against each container."
         | _ -> ()
 
         state
@@ -339,7 +345,9 @@ type CosmosDbBuilder() =
     /// Sets the throughput of the server.
     [<CustomOperation "throughput">]
     member _.Throughput(state: CosmosDbConfig, throughput) =
-        { state with DbThroughput = Some throughput }
+        { state with
+            DbThroughput = Some throughput
+        }
 
     member _.Throughput(state: CosmosDbConfig, throughput) =
         { state with
@@ -380,7 +388,7 @@ type CosmosDbBuilder() =
 
     /// Sets the backup policy of the database
     [<CustomOperation "backup_policy">]
-    member _.BackupPolicy(state: CosmosDbConfig, backupPolicy:BackupPolicy) =
+    member _.BackupPolicy(state: CosmosDbConfig, backupPolicy: BackupPolicy) =
         { state with
             BackupPolicy = backupPolicy
         }

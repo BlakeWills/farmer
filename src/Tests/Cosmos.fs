@@ -6,9 +6,9 @@ open Farmer.Builders
 open Farmer.Storage
 open Farmer.Arm.DocumentDb
 
-let getParsedTemplate (t:ResourceGroupConfig) = 
-  let json = t.Template |> Writer.toJson 
-  json |> Newtonsoft.Json.Linq.JObject.Parse
+let getParsedTemplate (t: ResourceGroupConfig) =
+    let json = t.Template |> Writer.toJson
+    json |> Newtonsoft.Json.Linq.JObject.Parse
 
 let accountSelector =
     "$.resources[?(@.type=='Microsoft.DocumentDb/databaseAccounts')]"
@@ -70,10 +70,7 @@ let tests =
 
                 let jobj = t.Template |> Writer.toJson |> Newtonsoft.Json.Linq.JObject.Parse
 
-                let locationJOjb =
-                    jobj.SelectToken(
-                        $"{accountSelector}.properties.locations[0]"
-                    )
+                let locationJOjb = jobj.SelectToken($"{accountSelector}.properties.locations[0]")
 
                 Expect.isNotEmpty (locationJOjb |> string) "location should be filled"
 
@@ -211,217 +208,360 @@ let tests =
                 let t = arm { add_resource (cosmosDb { name "test" }) }
                 let jobj = getParsedTemplate t
 
-                Expect.isNull (jobj.SelectToken($"{accountSelector}.properties.backupPolicy.type", errorWhenNoMatch=false)) "backup policy should not be included by default"
+                Expect.isNull
+                    (jobj.SelectToken($"{accountSelector}.properties.backupPolicy.type", errorWhenNoMatch = false))
+                    "backup policy should not be included by default"
             }
             test "Continuous backup policy" {
-                let t = arm { add_resource (cosmosDb {
-                    name "test"
-                    backup_policy CosmosDb.BackupPolicy.Continuous
-                })}
+                let t =
+                    arm {
+                        add_resource (
+                            cosmosDb {
+                                name "test"
+                                backup_policy CosmosDb.BackupPolicy.Continuous
+                            }
+                        )
+                    }
 
                 let jobj = getParsedTemplate t
 
-                let policy = jobj.SelectToken($"{accountSelector}.properties.backupPolicy.type").ToString()
+                let policy =
+                    jobj.SelectToken($"{accountSelector}.properties.backupPolicy.type").ToString()
+
                 Expect.equal policy "Continuous" "backup policy should be Continuous"
             }
             test "Periodic backup policy" {
-                let t = arm { add_resource (cosmosDb {
-                    name "test"
-                    backup_policy (CosmosDb.BackupPolicy.Periodic(
-                        BackupIntervalInMinutes = 60,
-                        BackupRetentionIntervalInHours = 168,
-                        BackupStorageRedundancy = CosmosDb.BackupStorageRedundancy.Geo))
-                })}
+                let t =
+                    arm {
+                        add_resource (
+                            cosmosDb {
+                                name "test"
+
+                                backup_policy (
+                                    CosmosDb.BackupPolicy.Periodic(
+                                        BackupIntervalInMinutes = 60,
+                                        BackupRetentionIntervalInHours = 168,
+                                        BackupStorageRedundancy = CosmosDb.BackupStorageRedundancy.Geo
+                                    )
+                                )
+                            }
+                        )
+                    }
 
                 let jobj = getParsedTemplate t
 
                 let resourcePrefix = $"{accountSelector}.properties.backupPolicy"
 
-                Expect.equal (jobj.SelectToken($"{resourcePrefix}.type").ToString()) "Periodic" "backup policy should be Periodic"
-                Expect.equal (jobj.SelectToken($"{resourcePrefix}.periodicModeProperties.backupIntervalInMinutes").ToString()) "60" "backup interval should be 60"
-                Expect.equal (jobj.SelectToken($"{resourcePrefix}.periodicModeProperties.backupRetentionIntervalInHours").ToString()) "168" "backup interval should be 168"
-                Expect.equal (jobj.SelectToken($"{resourcePrefix}.periodicModeProperties.backupStorageRedundancy").ToString()) "Geo" "backup redundancy should be geo"
+                Expect.equal
+                    (jobj.SelectToken($"{resourcePrefix}.type").ToString())
+                    "Periodic"
+                    "backup policy should be Periodic"
+
+                Expect.equal
+                    (jobj
+                        .SelectToken($"{resourcePrefix}.periodicModeProperties.backupIntervalInMinutes")
+                        .ToString())
+                    "60"
+                    "backup interval should be 60"
+
+                Expect.equal
+                    (jobj
+                        .SelectToken($"{resourcePrefix}.periodicModeProperties.backupRetentionIntervalInHours")
+                        .ToString())
+                    "168"
+                    "backup interval should be 168"
+
+                Expect.equal
+                    (jobj
+                        .SelectToken($"{resourcePrefix}.periodicModeProperties.backupStorageRedundancy")
+                        .ToString())
+                    "Geo"
+                    "backup redundancy should be geo"
             }
             test "Autoscale settings" {
-                let t = arm { add_resource (cosmosDb {
-                    name "test"
-                    throughput (CosmosDb.Throughput.Autoscale(1000<CosmosDb.RU>))
-                })}
+                let t =
+                    arm {
+                        add_resource (
+                            cosmosDb {
+                                name "test"
+                                throughput (CosmosDb.Throughput.Autoscale(1000<CosmosDb.RU>))
+                            }
+                        )
+                    }
 
                 let jobj = getParsedTemplate t
-                
+
                 Expect.equal
-                    (jobj.SelectToken($"{databaseSelector}.properties.options.autoscaleSettings.maxThroughput").ToString())
+                    (jobj
+                        .SelectToken($"{databaseSelector}.properties.options.autoscaleSettings.maxThroughput")
+                        .ToString())
                     "1000"
                     "Max throughput should be 1000"
             }
             test "Restrict to Azure services" {
-                let t = arm { add_resource (cosmosDb {
-                    name "test"
-                    restrict_to_azure_services
-                })}
+                let t =
+                    arm {
+                        add_resource (
+                            cosmosDb {
+                                name "test"
+                                restrict_to_azure_services
+                            }
+                        )
+                    }
 
                 let jobj = getParsedTemplate t
 
                 Expect.equal
-                    (jobj.SelectToken($"{accountSelector}.properties.ipRules[0].ipAddressOrRange").ToString())
+                    (jobj
+                        .SelectToken($"{accountSelector}.properties.ipRules[0].ipAddressOrRange")
+                        .ToString())
                     "0.0.0.0"
                     "IP rule for 0.0.0.0 should be added to restrict network access to Azure services"
             }
             test "Dedicated provisioned container throughput" {
-                let t = arm { add_resource (cosmosDb {
-                    name "test"
-                    throughput None
-                    add_containers [
-                        cosmosContainer {
-                            name "SomeContainer"
-                            partition_key [ "/id" ] CosmosDb.Hash
-                            throughput 100<CosmosDb.RU>
-                        }
-                    ]
-                })}
+                let t =
+                    arm {
+                        add_resource (
+                            cosmosDb {
+                                name "test"
+                                throughput None
+
+                                add_containers
+                                    [
+                                        cosmosContainer {
+                                            name "SomeContainer"
+                                            partition_key [ "/id" ] CosmosDb.Hash
+                                            throughput 100<CosmosDb.RU>
+                                        }
+                                    ]
+                            }
+                        )
+                    }
 
                 let jobj = getParsedTemplate t
 
-                Expect.isNull (jobj.SelectToken($"{databaseSelector}.properties.options.throughput", errorWhenNoMatch=false)) "db throughput should not be set"
-                Expect.equal (jobj.SelectToken($"{containerSelector}.properties.options.throughput").ToString()) "100" "throughput should be 100"
+                Expect.isNull
+                    (jobj.SelectToken($"{databaseSelector}.properties.options.throughput", errorWhenNoMatch = false))
+                    "db throughput should not be set"
+
+                Expect.equal
+                    (jobj
+                        .SelectToken($"{containerSelector}.properties.options.throughput")
+                        .ToString())
+                    "100"
+                    "throughput should be 100"
             }
             test "Dedicated autoscale container throughput" {
-                let t = arm { add_resource (cosmosDb {
-                    name "test"
-                    throughput None
-                    add_containers [
-                        cosmosContainer {
-                            name "SomeContainer"
-                            partition_key [ "/id" ] CosmosDb.Hash
-                            throughput (CosmosDb.Throughput.Autoscale(1000<CosmosDb.RU>))
-                        }
-                    ]
-                })}
+                let t =
+                    arm {
+                        add_resource (
+                            cosmosDb {
+                                name "test"
+                                throughput None
+
+                                add_containers
+                                    [
+                                        cosmosContainer {
+                                            name "SomeContainer"
+                                            partition_key [ "/id" ] CosmosDb.Hash
+                                            throughput (CosmosDb.Throughput.Autoscale(1000<CosmosDb.RU>))
+                                        }
+                                    ]
+                            }
+                        )
+                    }
 
                 let jobj = getParsedTemplate t
 
-                Expect.isNull (jobj.SelectToken($"{databaseSelector}.properties.options.throughput", errorWhenNoMatch=false)) "db throughput should not be set"
-                Expect.equal (jobj.SelectToken($"{containerSelector}.properties.options.autoscaleSettings.maxThroughput").ToString()) "1000" "Max throughput should be 1000"
+                Expect.isNull
+                    (jobj.SelectToken($"{databaseSelector}.properties.options.throughput", errorWhenNoMatch = false))
+                    "db throughput should not be set"
+
+                Expect.equal
+                    (jobj
+                        .SelectToken($"{containerSelector}.properties.options.autoscaleSettings.maxThroughput")
+                        .ToString())
+                    "1000"
+                    "Max throughput should be 1000"
             }
             test "Setting container throughput to Serverless throws" {
-                Expect.throws (fun () -> 
-                    arm { add_resource (cosmosDb {
-                        name "test"
-                        throughput 100<CosmosDb.RU>
-                        add_containers [
-                            cosmosContainer {
-                                name "container"
-                                partition_key [ "/id" ] CosmosDb.Hash
-                                throughput CosmosDb.Throughput.Serverless
-                            }
-                        ]
-                    })} |> ignore
-                    ) "Container throughput can must be one of 'Provisioned' or 'Autoscale'"
+                Expect.throws
+                    (fun () ->
+                        arm {
+                            add_resource (
+                                cosmosDb {
+                                    name "test"
+                                    throughput 100<CosmosDb.RU>
+
+                                    add_containers
+                                        [
+                                            cosmosContainer {
+                                                name "container"
+                                                partition_key [ "/id" ] CosmosDb.Hash
+                                                throughput CosmosDb.Throughput.Serverless
+                                            }
+                                        ]
+                                }
+                            )
+                        }
+                        |> ignore)
+                    "Container throughput can must be one of 'Provisioned' or 'Autoscale'"
             }
             test "Can use shared and dedicated container throughput" {
                 let sharedContainerName = "SharedThroughputContainer"
                 let dedicatedContainerName = "DedicatedThroughputContainer"
 
-                let t = arm { add_resource (cosmosDb {
-                    name "test"
-                    throughput 1000<CosmosDb.RU>
-                    add_containers [
-                        cosmosContainer {
-                            name sharedContainerName
-                            partition_key [ "/id" ] CosmosDb.Hash
-                        }
-                        cosmosContainer {
-                            name dedicatedContainerName
-                            partition_key [ "/id" ] CosmosDb.Hash
-                            throughput 100<CosmosDb.RU>
-                        }
-                    ]
-                })}
+                let t =
+                    arm {
+                        add_resource (
+                            cosmosDb {
+                                name "test"
+                                throughput 1000<CosmosDb.RU>
+
+                                add_containers
+                                    [
+                                        cosmosContainer {
+                                            name sharedContainerName
+                                            partition_key [ "/id" ] CosmosDb.Hash
+                                        }
+                                        cosmosContainer {
+                                            name dedicatedContainerName
+                                            partition_key [ "/id" ] CosmosDb.Hash
+                                            throughput 100<CosmosDb.RU>
+                                        }
+                                    ]
+                            }
+                        )
+                    }
 
                 let jobj = getParsedTemplate t
 
-                Expect.equal (jobj.SelectToken($"{databaseSelector}.properties.options.throughput").ToString()) "1000" "database throughput should be 1000"
+                Expect.equal
+                    (jobj.SelectToken($"{databaseSelector}.properties.options.throughput").ToString())
+                    "1000"
+                    "database throughput should be 1000"
 
                 let containerQuery name =
                     $"resources[?(@.name=='test-account/test/{name}')].properties.options.throughput"
 
-                Expect.isNull (jobj.SelectToken((containerQuery sharedContainerName), errorWhenNoMatch=false)) "Shared throughput container should not have throughput specified"
-                
-                Expect.equal (jobj.SelectToken(containerQuery dedicatedContainerName).ToString()) "100" "throughput should be 1000"
+                Expect.isNull
+                    (jobj.SelectToken((containerQuery sharedContainerName), errorWhenNoMatch = false))
+                    "Shared throughput container should not have throughput specified"
+
+                Expect.equal
+                    (jobj.SelectToken(containerQuery dedicatedContainerName).ToString())
+                    "100"
+                    "throughput should be 1000"
             }
             test "Db throughput handles None" {
-                let t = arm { add_resource (cosmosDb {
-                    name "test"
-                    throughput None
-                    add_containers [
-                        cosmosContainer {
-                            name "container"
-                            partition_key [ "/id" ] CosmosDb.Hash
-                            throughput 100<CosmosDb.RU>
-                        }
-                    ]
-                })}
+                let t =
+                    arm {
+                        add_resource (
+                            cosmosDb {
+                                name "test"
+                                throughput None
+
+                                add_containers
+                                    [
+                                        cosmosContainer {
+                                            name "container"
+                                            partition_key [ "/id" ] CosmosDb.Hash
+                                            throughput 100<CosmosDb.RU>
+                                        }
+                                    ]
+                            }
+                        )
+                    }
 
                 let jobj = getParsedTemplate t
 
-                Expect.isNull (jobj.SelectToken($"{databaseSelector}.properties.options.throughput", errorWhenNoMatch=false)) "Throughput should not be set"
+                Expect.isNull
+                    (jobj.SelectToken($"{databaseSelector}.properties.options.throughput", errorWhenNoMatch = false))
+                    "Throughput should not be set"
             }
             test "Container throughput handles None" {
-                let t = arm { add_resource (cosmosDb {
-                    name "test"
-                    throughput 100<CosmosDb.RU>
-                    add_containers [
-                        cosmosContainer {
-                            name "container"
-                            partition_key [ "/id" ] CosmosDb.Hash
-                            throughput None
-                        }
-                    ]
-                })}
+                let t =
+                    arm {
+                        add_resource (
+                            cosmosDb {
+                                name "test"
+                                throughput 100<CosmosDb.RU>
+
+                                add_containers
+                                    [
+                                        cosmosContainer {
+                                            name "container"
+                                            partition_key [ "/id" ] CosmosDb.Hash
+                                            throughput None
+                                        }
+                                    ]
+                            }
+                        )
+                    }
 
                 let jobj = getParsedTemplate t
 
-                Expect.isNull (jobj.SelectToken($"{containerSelector}.properties.options.throughput", errorWhenNoMatch=false)) "Throughput should not be set"
+                Expect.isNull
+                    (jobj.SelectToken($"{containerSelector}.properties.options.throughput", errorWhenNoMatch = false))
+                    "Throughput should not be set"
             }
             test "Throughput must be set on database or all containers" {
-                Expect.throws (fun () -> 
-                    arm { add_resource (cosmosDb {
-                        name "test"
-                        throughput None
-                        add_containers [
-                            cosmosContainer {
-                                name "container"
-                                partition_key [ "/id" ] CosmosDb.Hash
-                            }
-                            cosmosContainer {
-                                name "container"
-                                partition_key [ "/id" ] CosmosDb.Hash
-                                throughput 100<CosmosDb.RU>
-                            }
-                        ]
-                    })} |> ignore
-                    ) "One or more containers have no throughput specified. Either set database (shared) throughput, or set dedicated throughput against each container."
+                Expect.throws
+                    (fun () ->
+                        arm {
+                            add_resource (
+                                cosmosDb {
+                                    name "test"
+                                    throughput None
+
+                                    add_containers
+                                        [
+                                            cosmosContainer {
+                                                name "container"
+                                                partition_key [ "/id" ] CosmosDb.Hash
+                                            }
+                                            cosmosContainer {
+                                                name "container"
+                                                partition_key [ "/id" ] CosmosDb.Hash
+                                                throughput 100<CosmosDb.RU>
+                                            }
+                                        ]
+                                }
+                            )
+                        }
+                        |> ignore)
+                    "One or more containers have no throughput specified. Either set database (shared) throughput, or set dedicated throughput against each container."
             }
             test "Can add multiple indexes" {
-                let t = arm { add_resource (cosmosDb {
-                    name "test"
-                    throughput 1000<CosmosDb.RU>
-                    add_containers [
-                        cosmosContainer {
-                            name "container"
-                            partition_key [ "/id" ] CosmosDb.Hash
-                            add_indexes [
-                                ("/field1/?", [ CosmosDb.String, CosmosDb.Range ])
-                                ("/field2/?", [ CosmosDb.String, CosmosDb.Range ])
-                            ]
-                        }
-                    ]
-                })}
+                let t =
+                    arm {
+                        add_resource (
+                            cosmosDb {
+                                name "test"
+                                throughput 1000<CosmosDb.RU>
+
+                                add_containers
+                                    [
+                                        cosmosContainer {
+                                            name "container"
+                                            partition_key [ "/id" ] CosmosDb.Hash
+
+                                            add_indexes
+                                                [
+                                                    ("/field1/?", [ CosmosDb.String, CosmosDb.Range ])
+                                                    ("/field2/?", [ CosmosDb.String, CosmosDb.Range ])
+                                                ]
+                                        }
+                                    ]
+                            }
+                        )
+                    }
 
                 let jobj = getParsedTemplate t
 
-                let containerPrefix = $"{containerSelector}.properties.resource.indexingPolicy.includedPaths"
+                let containerPrefix =
+                    $"{containerSelector}.properties.resource.indexingPolicy.includedPaths"
+
                 Expect.equal (jobj.SelectToken($"{containerPrefix}[0].path").ToString()) "/field1/?" "field1 missing"
                 Expect.equal (jobj.SelectToken($"{containerPrefix}[1].path").ToString()) "/field2/?" "field2 missing"
             }
